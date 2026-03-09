@@ -60,7 +60,9 @@ git clone https://github.com/Besfian/java-dev.git
 cd java-dev
 
 # Собрать проект (с тестами)
+chmod +x mvnw
 ./mvnw clean package
+
 
 # Собрать без тестов (для быстрого деплоя)
 ./mvnw clean package -DskipTests
