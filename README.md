@@ -56,8 +56,8 @@
 
 ```bash
 # Клонировать репозиторий
-git clone https://github.com/your-username/my-blog-back-app.git
-cd my-blog-back-app
+git clone https://github.com/Besfian/java-dev.git
+cd java-dev
 
 # Собрать проект (с тестами)
 ./mvnw clean package
