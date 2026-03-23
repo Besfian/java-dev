@@ -5,8 +5,6 @@ import com.blog.dto.PostRequest;
 import com.blog.dto.PostResponse;
 import com.blog.dto.PostsPageResponse;
 
-import java.util.List;
-
 public interface PostService {
     PostResponse createPost(PostRequest postRequest);
     PostResponse updatePost(Long id, PostRequest postRequest);
