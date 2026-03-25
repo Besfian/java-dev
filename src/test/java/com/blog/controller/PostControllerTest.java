@@ -2,12 +2,12 @@ package com.blog.controller;
 
 import com.blog.dto.PostRequest;
 import com.blog.dto.PostResponse;
+import com.blog.dto.PostsPageResponse;
 import com.blog.service.PostService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
@@ -21,8 +21,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+@WebMvcTest(PostController.class)
 class PostControllerTest {
 
     @Autowired
@@ -36,7 +35,14 @@ class PostControllerTest {
 
     @Test
     void testGetPosts() throws Exception {
-        when(postService.getPosts("", 1, 5)).thenReturn(null);
+        PostsPageResponse mockResponse = new PostsPageResponse(
+                Arrays.asList(),
+                false,
+                false,
+                1
+        );
+
+        when(postService.getPosts("", 1, 5)).thenReturn(mockResponse);
 
         mockMvc.perform(get("/api/posts")
                         .param("search", "")

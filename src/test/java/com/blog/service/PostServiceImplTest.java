@@ -55,7 +55,6 @@ class PostServiceImplTest {
         testPostRequest.setTags(Arrays.asList("test", "java"));
     }
 
-    // ==================== CREATE POST TESTS ====================
 
     @Test
     void createPost_shouldSaveAndReturnPostResponse() {
@@ -74,7 +73,6 @@ class PostServiceImplTest {
         verify(postRepository, times(1)).save(any(Post.class));
     }
 
-    // ==================== GET POST TESTS ====================
 
     @Test
     void getPost_shouldReturnPostResponse_whenPostExists() {
@@ -101,7 +99,6 @@ class PostServiceImplTest {
         verify(postRepository, times(1)).findById(99L);
     }
 
-    // ==================== UPDATE POST TESTS ====================
 
     @Test
     void updatePost_shouldUpdateAndReturnPostResponse_whenPostExists() {
@@ -149,7 +146,6 @@ class PostServiceImplTest {
         verify(postRepository, never()).save(any(Post.class));
     }
 
-    // ==================== DELETE POST TESTS ====================
 
     @Test
     void deletePost_shouldDeletePostAndComments_whenPostExists() {
@@ -177,7 +173,6 @@ class PostServiceImplTest {
         verify(postRepository, never()).deleteById(anyLong());
     }
 
-    // ==================== LIKE POST TESTS ====================
 
     @Test
     void likePost_shouldIncrementLikesAndReturnNewCount_whenPostExists() {
@@ -204,7 +199,6 @@ class PostServiceImplTest {
         verify(postRepository, never()).incrementLikes(anyLong());
     }
 
-    // ==================== GET POSTS WITH PAGINATION TESTS ====================
 
     @Test
     void getPosts_shouldReturnPageResponse_withoutSearch() {
@@ -284,7 +278,6 @@ class PostServiceImplTest {
         assertThat(response.getLastPage()).isEqualTo(1);
     }
 
-    // ==================== UPDATE IMAGE TESTS ====================
 
     @Test
     void updateImage_shouldUpdateImage_whenPostExistsAndImageValid() {
@@ -336,7 +329,6 @@ class PostServiceImplTest {
         verify(postRepository, never()).updateImage(anyLong(), any());
     }
 
-    // ==================== GET IMAGE TESTS ====================
 
     @Test
     void getImage_shouldReturnImage_whenPostExistsAndImagePresent() {
@@ -360,7 +352,6 @@ class PostServiceImplTest {
         verify(postRepository, times(1)).findImageById(99L);
     }
 
-    // ==================== TEXT TRUNCATION TESTS ====================
 
     @Test
     void convertToResponse_shouldTruncateLongText_whenFullTextFalse() {
