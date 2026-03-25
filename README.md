@@ -66,3 +66,6 @@
 
 # Собрать без тестов
 ./gradlew clean build -x test
+
+# Запуск приложения
+./gradlew bootRun
