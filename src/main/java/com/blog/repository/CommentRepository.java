@@ -1,28 +1,26 @@
 package com.blog.repository;
 
-
 import com.blog.model.Comment;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.simple.JdbcClient;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
-import java.sql.PreparedStatement;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class CommentRepository {
 
-    private final JdbcTemplate jdbcTemplate;
+    private final JdbcClient jdbcClient;
 
     @Autowired
-    public CommentRepository(JdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
+    public CommentRepository(JdbcClient jdbcClient) {
+        this.jdbcClient = jdbcClient;
     }
 
     private final RowMapper<Comment> commentRowMapper = (rs, rowNum) -> {
@@ -49,7 +47,7 @@ public class CommentRepository {
     }
 
     private Comment insert(Comment comment) {
-        String sql = "INSERT INTO comments (text, post_id, created_at, updated_at) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO comments (text, post_id, created_at, updated_at) VALUES (:text, :postId, :createdAt, :updatedAt)";
 
         KeyHolder keyHolder = new GeneratedKeyHolder();
 
@@ -57,62 +55,57 @@ public class CommentRepository {
         comment.setCreatedAt(now);
         comment.setUpdatedAt(now);
 
-        jdbcTemplate.update(connection -> {
-            PreparedStatement ps = connection.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
-            ps.setString(1, comment.getText());
-            ps.setLong(2, comment.getPostId());
-            ps.setTimestamp(3, Timestamp.valueOf(comment.getCreatedAt()));
-            ps.setTimestamp(4, Timestamp.valueOf(comment.getUpdatedAt()));
-            return ps;
-        }, keyHolder);
+        jdbcClient.sql(sql)
+                .param("text", comment.getText())
+                .param("postId", comment.getPostId())
+                .param("createdAt", Timestamp.valueOf(comment.getCreatedAt()))
+                .param("updatedAt", Timestamp.valueOf(comment.getUpdatedAt()))
+                .update(keyHolder, "id");
 
         if (keyHolder.getKey() != null) {
             comment.setId(keyHolder.getKey().longValue());
         }
 
-        jdbcTemplate.update("UPDATE posts SET comments_count = comments_count + 1, updated_at = ? WHERE id = ?",
-                Timestamp.valueOf(LocalDateTime.now()), comment.getPostId());
-
         return comment;
     }
 
     private Comment update(Comment comment) {
-        String sql = "UPDATE comments SET text = ?, updated_at = ? WHERE id = ?";
+        String sql = "UPDATE comments SET text = :text, updated_at = :updatedAt WHERE id = :id";
 
         comment.setUpdatedAt(LocalDateTime.now());
 
-        jdbcTemplate.update(sql,
-                comment.getText(),
-                Timestamp.valueOf(comment.getUpdatedAt()),
-                comment.getId());
+        jdbcClient.sql(sql)
+                .param("text", comment.getText())
+                .param("updatedAt", Timestamp.valueOf(comment.getUpdatedAt()))
+                .param("id", comment.getId())
+                .update();
 
         return comment;
     }
 
-    public Comment findById(Long id) {
-        String sql = "SELECT * FROM comments WHERE id = ?";
-        List<Comment> comments = jdbcTemplate.query(sql, commentRowMapper, id);
-        return comments.isEmpty() ? null : comments.get(0);
+    public Optional<Comment> findById(Long id) {
+        String sql = "SELECT * FROM comments WHERE id = :id";
+        return jdbcClient.sql(sql)
+                .param("id", id)
+                .query(commentRowMapper)
+                .optional();
     }
 
     public List<Comment> findByPostId(Long postId) {
-        String sql = "SELECT * FROM comments WHERE post_id = ? ORDER BY created_at ASC";
-        return jdbcTemplate.query(sql, commentRowMapper, postId);
+        String sql = "SELECT * FROM comments WHERE post_id = :postId ORDER BY created_at ASC";
+        return jdbcClient.sql(sql)
+                .param("postId", postId)
+                .query(commentRowMapper)
+                .list();
     }
 
     public void deleteById(Long id) {
-        Comment comment = findById(id);
-        if (comment != null) {
-            String sql = "DELETE FROM comments WHERE id = ?";
-            jdbcTemplate.update(sql, id);
-
-            jdbcTemplate.update("UPDATE posts SET comments_count = comments_count - 1, updated_at = ? WHERE id = ?",
-                    Timestamp.valueOf(LocalDateTime.now()), comment.getPostId());
-        }
+        String sql = "DELETE FROM comments WHERE id = :id";
+        jdbcClient.sql(sql).param("id", id).update();
     }
 
     public void deleteByPostId(Long postId) {
-        String sql = "DELETE FROM comments WHERE post_id = ?";
-        jdbcTemplate.update(sql, postId);
+        String sql = "DELETE FROM comments WHERE post_id = :postId";
+        jdbcClient.sql(sql).param("postId", postId).update();
     }
 }

@@ -1,9 +1,9 @@
 package com.blog.service;
 
-
 import com.blog.dto.PostRequest;
 import com.blog.dto.PostResponse;
 import com.blog.dto.PostsPageResponse;
+import com.blog.exception.PostNotFoundException;
 import com.blog.model.Post;
 import com.blog.repository.CommentRepository;
 import com.blog.repository.PostRepository;
@@ -43,10 +43,8 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostResponse updatePost(Long id, PostRequest postRequest) {
-        Post existingPost = postRepository.findById(id);
-        if (existingPost == null) {
-            throw new RuntimeException("Post not found with id: " + id);
-        }
+        Post existingPost = postRepository.findById(id)
+                .orElseThrow(() -> new PostNotFoundException(id));
 
         existingPost.setTitle(postRequest.getTitle());
         existingPost.setText(postRequest.getText());
@@ -58,10 +56,8 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public PostResponse getPost(Long id) {
-        Post post = postRepository.findById(id);
-        if (post == null) {
-            throw new RuntimeException("Post not found with id: " + id);
-        }
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new PostNotFoundException(id));
         return convertToResponse(post, true);
     }
 
@@ -97,6 +93,8 @@ public class PostServiceImpl implements PostService {
         int totalPosts = postRepository.count(searchQuery, tags.isEmpty() ? null : tags);
 
         int lastPage = (int) Math.ceil((double) totalPosts / pageSize);
+        if (lastPage == 0) lastPage = 1;
+
         boolean hasPrev = pageNumber > 1;
         boolean hasNext = pageNumber < lastPage;
 
@@ -109,31 +107,36 @@ public class PostServiceImpl implements PostService {
 
     @Override
     public void deletePost(Long id) {
+        postRepository.findById(id)
+                .orElseThrow(() -> new PostNotFoundException(id));
         commentRepository.deleteByPostId(id);
         postRepository.deleteById(id);
     }
 
-
     @Override
     public int likePost(Long id) {
+        Post post = postRepository.findById(id)
+                .orElseThrow(() -> new PostNotFoundException(id));
         postRepository.incrementLikes(id);
-        Post post = postRepository.findById(id);
-        return post != null ? post.getLikesCount() : 0;
+        return post.getLikesCount() + 1;
     }
 
     @Override
     public void updateImage(Long id, byte[] image) {
-        Post post = postRepository.findById(id);
-        if (post == null) {
-            throw new RuntimeException("Post not found");
-        }
-        postRepository.updateImage(id, image);
+        postRepository.findById(id)
+                .orElseThrow(() -> new PostNotFoundException(id));
 
+        if (image == null || image.length == 0) {
+            throw new IllegalArgumentException("Image is empty");
+        }
+
+        postRepository.updateImage(id, image);
     }
 
     @Override
     public byte[] getImage(Long id) {
-        return postRepository.findImageById(id);
+        return postRepository.findImageById(id)
+                .orElseThrow(() -> new PostNotFoundException(id));
     }
 
     private PostResponse convertToResponse(Post post, boolean fullText) {

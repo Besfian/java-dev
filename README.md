@@ -1,16 +1,17 @@
 # My Blog Backend Application
 
-Бэкенд для приложения-блога, реализованный на чистом Spring Framework (без Spring Boot) с использованием сервлет-контейнера Tomcat.
+Бэкенд для приложения-блога, реализованный на Spring Boot 3.2 с использованием встроенного сервлет-контейнера Tomcat.
 
 ## Технологии
 
 - Java 21
-- Spring Framework 6.1 (MVC, JDBC, Test)
-- Jakarta Servlet 6.0
-- Apache Tomcat 10
-- H2 Database (in-memory для разработки)
-- Maven
-- JUnit 5, Mockito
+- Spring Boot 3.2.4
+- Spring Web MVC
+- Spring Data JDBC
+- H2 Database (in-memory)
+- Gradle 8.5
+- JUnit 5, Mockito, Spring Boot Test
+- Lombok
 
 ## Функциональность
 
@@ -19,12 +20,15 @@
 - ✅ Лайки постов
 - ✅ Управление комментариями (CRUD)
 - ✅ Пагинация и поиск постов
-- ✅ Фильтрация по тегам
+- ✅ Фильтрация по тегам (#тег)
 - ✅ REST API для фронтенда
+- ✅ Глобальная обработка исключений
+- ✅ CORS поддержка для фронтенда
 
 ## API Endpoints
 
 ### Посты
+
 | Метод | URL | Описание |
 |-------|-----|----------|
 | GET | `/api/posts?search=&pageNumber=1&pageSize=5` | Получить список постов |
@@ -37,6 +41,7 @@
 | GET | `/api/posts/{id}/image` | Получить изображение |
 
 ### Комментарии
+
 | Метод | URL | Описание |
 |-------|-----|----------|
 | GET | `/api/posts/{postId}/comments` | Получить комментарии поста |
@@ -48,21 +53,19 @@
 ## Требования к окружению
 
 - JDK 21
-- Maven 3.8+
-- Apache Tomcat 10
+- Gradle 8.5+
 - (Опционально) Docker для фронтенда
 
-## Сборка проекта
+## Сборка и запуск
+
+### Сборка проекта
 
 ```bash
-# Клонировать репозиторий
-git clone https://github.com/Besfian/java-dev.git
-cd java-dev
+# Очистить и собрать проект
+./gradlew clean build
 
-# Собрать проект (с тестами)
-chmod +x mvnw
-./mvnw clean package
+# Собрать без тестов
+./gradlew clean build -x test
 
-
-# Собрать без тестов (для быстрого деплоя)
-./mvnw clean package -DskipTests
+# Запуск приложения
+./gradlew bootRun

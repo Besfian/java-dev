@@ -1,8 +1,9 @@
 package com.blog.service;
 
-
 import com.blog.dto.CommentRequest;
 import com.blog.dto.CommentResponse;
+import com.blog.exception.CommentNotFoundException;
+import com.blog.exception.PostNotFoundException;
 import com.blog.model.Comment;
 import com.blog.repository.CommentRepository;
 import com.blog.repository.PostRepository;
@@ -29,28 +30,27 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentResponse createComment(Long postId, CommentRequest commentRequest) {
-        if (postRepository.findById(postId) == null) {
-            throw new RuntimeException("Post not found with id: " + postId);
-        }
+        postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException(postId));
 
         Comment comment = new Comment();
         comment.setText(commentRequest.getText());
         comment.setPostId(postId);
 
         Comment savedComment = commentRepository.save(comment);
+
+        postRepository.updateCommentsCount(postId, 1);
+
         return convertToResponse(savedComment);
     }
 
-
     @Override
     public CommentResponse updateComment(Long postId, Long commentId, CommentRequest commentRequest) {
-        Comment existingComment = commentRepository.findById(commentId);
-        if (existingComment == null) {
-            throw new RuntimeException("Comment not found");
-        }
+        Comment existingComment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new CommentNotFoundException(commentId));
 
         if (!existingComment.getPostId().equals(postId)) {
-            throw new RuntimeException("Comment does not belong to post");
+            throw new IllegalArgumentException("Comment does not belong to post with id: " + postId);
         }
 
         existingComment.setText(commentRequest.getText());
@@ -62,13 +62,11 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public CommentResponse getComment(Long postId, Long commentId) {
-        Comment comment = commentRepository.findById(commentId);
-        if (comment == null) {
-            throw new RuntimeException("Comment not found with id: " + commentId);
-        }
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new CommentNotFoundException(commentId));
 
         if (!comment.getPostId().equals(postId)) {
-            throw new RuntimeException("Comment does not belong to post with id: " + postId);
+            throw new IllegalArgumentException("Comment does not belong to post with id: " + postId);
         }
 
         return convertToResponse(comment);
@@ -76,9 +74,8 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public List<CommentResponse> getCommentsByPostId(Long postId) {
-        if (postRepository.findById(postId) == null) {
-            throw new RuntimeException("Post not found with id: " + postId);
-        }
+        postRepository.findById(postId)
+                .orElseThrow(() -> new PostNotFoundException(postId));
 
         return commentRepository.findByPostId(postId).stream()
                 .map(this::convertToResponse)
@@ -87,16 +84,16 @@ public class CommentServiceImpl implements CommentService {
 
     @Override
     public void deleteComment(Long postId, Long commentId) {
-        Comment comment = commentRepository.findById(commentId);
-        if (comment == null) {
-            throw new RuntimeException("Comment not found with id: " + commentId);
-        }
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new CommentNotFoundException(commentId));
 
         if (!comment.getPostId().equals(postId)) {
-            throw new RuntimeException("Comment does not belong to post with id: " + postId);
+            throw new IllegalArgumentException("Comment does not belong to post with id: " + postId);
         }
 
         commentRepository.deleteById(commentId);
+
+        postRepository.updateCommentsCount(postId, -1);
     }
 
     private CommentResponse convertToResponse(Comment comment) {
